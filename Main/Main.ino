@@ -126,20 +126,25 @@ void loop() {
       
       
       if(var0 == 1)  {    //Simple snapshot mode
-      int delsecs = var1;
-      clockrst();
-      for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
-            if((now()-t) >= delsecs)  {
-              v = 5;
+        int delsecs = var1;
+        int bulbmd = var2;
+        clockrst();
+        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
+          if((now()-t) >= delsecs)  {
+            v = 5;
+          }
+          if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
+            while(Serial.available())  {
+              Serial.read();
             }
-            if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-              while(Serial.available())  {
-                Serial.read();
-              }
-              v = 5;
-            }
-            }
-        shuttertrig();
+            v = 5;
+          }
+        }
+        if(buldmd == 0)  {    
+          shuttertrig(); // Take a normal photo.
+        } else  {
+          bulbmode(bulbmd);  // Use the bulb function to keep the shutter open
+        }
       }
       
       
