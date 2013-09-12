@@ -6,8 +6,8 @@
 #include <Time.h> 
 
 //    Time Variable
-  time_t t;
-  
+time_t t;
+
 //    Outputs
 int powerSwitch = 6;       // the pin on the power switch
 int IndicatorPin = 9;      // the pin that the indicator LED is attached to
@@ -38,7 +38,7 @@ int LDRval;
 
 
 void setup() {
-  
+
   pinMode(5, OUTPUT);
   digitalWrite(5, HIGH);
   
@@ -58,26 +58,26 @@ void setup() {
   delay(200);
   digitalWrite(ActivePin, LOW);// Off again
   while(digitalRead(powerSwitch) == HIGH)  {
-    
+
   }
-
-
   clockrst();
-
   calsensors();
 }
 
 void loop() {
   // see if there's incoming serial data:
   if(digitalRead(powerSwitch) == HIGH)  {
+    delay(1000);
+    if(digitalRead(powerSwitch) == HIGH)  {
+      digitalWrite(5, LOW);
+    }
+  }
+  //Here we set upt a loop to continuously check if the device has been left on for more than 5 minuites.
+  if((now()-t) >= 300)  {
     digitalWrite(5, LOW);
   }
-                   //Here we set upt a loop to continuously check if enough time has passed
-  if((now()-t) >= 120)  {
-    digitalWrite(5, LOW);
-  }
-          
-  
+
+
   while (Serial.available() > 0) {
     // read the oldest byte in the serial buffer:
     var0 = Serial.parseInt();
@@ -92,12 +92,12 @@ void loop() {
     var9 = Serial.parseInt();
     
     if(Serial.read() == '!')  {
-      
-      
+
+
       while(Serial.available())  {
         Serial.read();
       }
-  
+
       digitalWrite(ActivePin, HIGH);
       /*
       Serial.print("Var0: ");    //Debugging stuff ;)
@@ -143,7 +143,7 @@ void loop() {
         }
         if(bulbmd == 0)  {    
           shuttertrig(); // Take a normal photo.
-        } else  {
+          } else  {
           bulbmode(bulbmd);  // Use the bulb function to keep the shutter open
         }
       }
@@ -168,12 +168,12 @@ void loop() {
         tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
         shuttertrig();
         for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
-        
+
           if(infinite == 0)  {
             i = 2;
           }
-        
-        
+
+
           clockrst();
           for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
 
@@ -211,7 +211,7 @@ void loop() {
         int delaytime = var3;
         int persistant = var4;
         boolean bulbflash = var5;
-        int normal;
+        int normal = 0;
         while(persistant >= 1 || normal == 0){
           normal = 1;
 
@@ -223,7 +223,7 @@ void loop() {
             if(analogRead(MicPin) > (micval + MicSensitivity) || analogRead(MicPin) < (micval - MicSensitivity) || analogRead(LDRPin) > (LDRval + LDRSensitivity) || analogRead(LDRPin) < (LDRval - LDRSensitivity))  {
               delay(delaytime);
               flashtrig();
-              if(bulbflash) {
+              if(!bulbflash) {
                 shuttertrig();
               }
               v = 5;
@@ -253,7 +253,7 @@ void loop() {
       
       
       if(var0 == 4)  {    //SFlash trig mic LDR
-      
+
         int MicSensitivity = var1;
         int LDRSensitivity = var2;
         int dripslengthvar = var3;
@@ -268,20 +268,20 @@ void loop() {
         }
         for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
           if(analogRead(MicPin) > (micval + MicSensitivity) || analogRead(MicPin) < (micval - MicSensitivity) || analogRead(LDRPin) > (LDRval + LDRSensitivity) || analogRead(LDRPin) < (LDRval - LDRSensitivity))  {
-              v = 5;
-            }
+            v = 5;
+          }
           if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
             while(Serial.available())  {
               Serial.read();
             }
-          v = 5;
+            v = 5;
           }
         }
         
         if(flashdelay > 0)  {
           delay(flashdelay);                          //A little delay
         }
-  
+
         flashtrig();
         shuttertrig();
       }
@@ -306,12 +306,12 @@ void loop() {
         tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
         hdrphoto(s1, s2, s3);
         for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
-        
-        if(infinite == 0)  {
-          i = 2;
-        }
-        
-        
+
+          if(infinite == 0)  {
+            i = 2;
+          }
+
+
           clockrst();
           for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
             if((now()-t) >= tlsecs)  {
@@ -324,12 +324,12 @@ void loop() {
               v = 5;
               i = tlshot + 10;
             }
-            }
+          }
           hdrphoto(s1, s2, s3);
         }
         
       }
-        
+
       
       
       
@@ -348,18 +348,18 @@ void loop() {
       
       digitalWrite(ActivePin, LOW);  
     }
-clockrst();  
-}
+    clockrst();  
+  }
 }
 
 //Start of trigger code
 void shuttertrig()  {
-  
+
   digitalWrite(IndicatorPin, HIGH); 
   digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
   //Actual IR LED code goes here
   for (int i=0; i < 2; i++) {
-    
+
     pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
     pulseOFF(27850);                                    // turn pulse off for 27850 us
     pulseON(390);                                       // and so on
@@ -407,8 +407,8 @@ void driptrig(int delayvar)  {
   }
 }  
 
-void clockrst()  {  //This is just used to set all the clock values to 0 (the year goes to 2000)
-t = now();
+void clockrst()  {  //Used to set the time variable t to the current time, allowing it to be subtracted later on.
+  t = now();
 }
 
 void calsensors()  {
@@ -429,16 +429,16 @@ void hdrphoto(int s1, int s2, int s3)  {
 
 void bulbstartend() {
   int var = 0;
-  if(digitalRead(IndicatorPin) == LOW)  {
+  if(digitalRead(CableRelease) == LOW)  {
     var = 1;
   }
   if(var == 1)  {
-    digitalWrite(IndicatorPin, HIGH); 
     digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
   }
+  digitalWrite(IndicatorPin, HIGH); 
   //Actual IR LED code goes here
   for (int i=0; i < 2; i++) {
-    
+
     pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
     pulseOFF(27850);                                    // turn pulse off for 27850 us
     pulseON(390);                                       // and so on
@@ -448,86 +448,88 @@ void bulbstartend() {
     pulseON(400);
     pulseOFF(63200);
   }                            
-  //End of IR LED code :)
+  //End of IR LED code 
   if(var != 1)  {
-    digitalWrite(IndicatorPin, HIGH); 
-    digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
+    digitalWrite(CableRelease, LOW);   //Get the indicator on for a little visual reference
   }
+  delay(100);
+  digitalWrite(IndicatorPin, LOW);
 }
 
 
 
 void bulbmode(int del)  {
   if (del <= 3000)  {
-    
-    
-  digitalWrite(IndicatorPin, HIGH); 
-  digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
+
+
+    digitalWrite(IndicatorPin, HIGH); 
+    digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
   //Actual IR LED code goes here
-  for (int i=0; i < 2; i++) { 
-    pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
-    pulseOFF(27850);                                    // turn pulse off for 27850 us
-    pulseON(390);                                       // and so on
-    pulseOFF(1580);
-    pulseON(410);
-    pulseOFF(3580);
-    pulseON(400);
-    pulseOFF(63200);
-  }
-  delay(del);
-  for (int i=0; i < 2; i++) {   
-    pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
-    pulseOFF(27850);                                    // turn pulse off for 27850 us
-    pulseON(390);                                       // and so on
-    pulseOFF(1580);
-    pulseON(410);
-    pulseOFF(3580);
-    pulseON(400);
-    pulseOFF(63200);
-  }                            
-  //End of IR LED code :)
-  digitalWrite(IndicatorPin, LOW);
-  digitalWrite(CableRelease, LOW);  //Turn the LED off again
+    for (int i=0; i < 2; i++) { 
+      pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
+      pulseOFF(27850);                                    // turn pulse off for 27850 us
+      pulseON(390);                                       // and so on
+      pulseOFF(1580);
+      pulseON(410);
+      pulseOFF(3580);
+      pulseON(400);
+      pulseOFF(63200);
+    }
+    delay(del);
+    for (int i=0; i < 2; i++) {   
+      pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
+      pulseOFF(27850);                                    // turn pulse off for 27850 us
+      pulseON(390);                                       // and so on
+      pulseOFF(1580);
+      pulseON(410);
+      pulseOFF(3580);
+      pulseON(400);
+      pulseOFF(63200);
+    }                            
+    //End of IR LED code 
+    digitalWrite(IndicatorPin, LOW);
+    digitalWrite(CableRelease, LOW);  //Turn the LED off again
   
   
   }  else  {
+
+    del = del/1000;  
     
-  del = del/1000;  
-    
-  digitalWrite(IndicatorPin, HIGH); 
-  digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
-  //Actual IR LED code goes here
-  for (int i=0; i < 2; i++) { 
-    pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
-    pulseOFF(27850);                                    // turn pulse off for 27850 us
-    pulseON(390);                                       // and so on
-    pulseOFF(1580);
-    pulseON(410);
-    pulseOFF(3580);
-    pulseON(400);
-    pulseOFF(63200);
-  }
-        clockrst();
-          for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
-            if((now()-t) >= del)  {
-              v = 5;
-            }
-          }
-  for (int i=0; i < 2; i++) {   
-    pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
-    pulseOFF(27850);                                    // turn pulse off for 27850 us
-    pulseON(390);                                       // and so on
-    pulseOFF(1580);
-    pulseON(410);
-    pulseOFF(3580);
-    pulseON(400);
-    pulseOFF(63200);
-  }                            
+    digitalWrite(IndicatorPin, HIGH); 
+    digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
+      //Actual IR LED code goes here
+    for (int i=0; i < 2; i++) { 
+      pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
+      pulseOFF(27850);                                    // turn pulse off for 27850 us
+      pulseON(390);                                       // and so on
+      pulseOFF(1580);
+      pulseON(410);
+      pulseOFF(3580);
+      pulseON(400);
+      pulseOFF(63200);
+    }
+    clockrst();
+    delay(100);
+    digitalWrite(IndicatorPin, LOW); 
+    for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
+      if((now()-t) >= del)  {
+        v = 5;
+      }
+    }
+    digitalWrite(IndicatorPin, HIGH);
+    delay(100);
+    for (int i=0; i < 2; i++) {   
+      pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
+      pulseOFF(27850);                                    // turn pulse off for 27850 us
+      pulseON(390);                                       // and so on
+      pulseOFF(1580);
+      pulseON(410);
+      pulseOFF(3580);
+      pulseON(400);
+      pulseOFF(63200);
+    }                            
   //End of IR LED code :)
-  digitalWrite(IndicatorPin, LOW);
-  digitalWrite(CableRelease, LOW);  //Turn the LED off again   
- 
-  
+    digitalWrite(IndicatorPin, LOW);
+    digitalWrite(CableRelease, LOW);  //Turn the LED off again   
   }
-  
 }
