@@ -140,7 +140,7 @@ void loop() {
             v = 5;
           }
         }
-        if(buldmd == 0)  {    
+        if(bulbmd == 0)  {    
           shuttertrig(); // Take a normal photo.
         } else  {
           bulbmode(bulbmd);  // Use the bulb function to keep the shutter open
@@ -194,24 +194,46 @@ void loop() {
       
       
       
-      if(var0 == 3)  {    //Simple shutter Mic trigger or LDR
+      if(var0 == 3)  {              //Simple shutter Mic trigger or LDR
         int MicSensitivity = var1;
         int LDRSensitivity = var2;
         int delaytime = var3;
-        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
-          if(analogRead(MicPin) > (micval + MicSensitivity) || analogRead(MicPin) < (micval - MicSensitivity) || analogRead(LDRPin) > (LDRval + LDRSensitivity) || analogRead(LDRPin) < (LDRval - LDRSensitivity))  {
-              v = 5;
-             
-            }
-        if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-          while(Serial.available())  {
-            Serial.read();
+        int persistant = var4;
+        boolean bulbflash = var5;
+        int normal;
+        while(persistant >= 1 || normal == 0){
+          normal = 1;
+
+          if(bulbflash) {
+            bulbstartend();
           }
-          v = 5;
+
+          for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
+            if(analogRead(MicPin) > (micval + MicSensitivity) || analogRead(MicPin) < (micval - MicSensitivity) || analogRead(LDRPin) > (LDRval + LDRSensitivity) || analogRead(LDRPin) < (LDRval - LDRSensitivity))  {
+              delay(delaytime);
+              flashtrig();
+              if(bulbflash) {
+                shuttertrig();
+              }
+              v = 5;
+            }
+            if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
+              while(Serial.available())  {
+                Serial.read();
+              }
+              v = 5;
+              persistant = 0;
+            }
+          }
+          
+          if(persistant >= 1)   {
+            delay(1000);
+          }
+
+          if(bulbflash) {
+            bulbstartend();
+          }
         }
-        }
-        delay(delaytime);
-        shuttertrig();
       }
       
       
@@ -391,6 +413,38 @@ void hdrphoto(int s1, int s2, int s3)  {
   bulbmode(s3);
   delay(350);
 }
+
+
+
+void bulbstartend() {
+  int var = 0;
+  if(digitalRead(IndicatorPin) == LOW)  {
+    var = 1;
+  }
+  if(var == 1)  {
+    digitalWrite(IndicatorPin, HIGH); 
+    digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
+  }
+  //Actual IR LED code goes here
+  for (int i=0; i < 2; i++) {
+    
+    pulseON(2000);                                      // pulse for 2000 uS (Microseconds)
+    pulseOFF(27850);                                    // turn pulse off for 27850 us
+    pulseON(390);                                       // and so on
+    pulseOFF(1580);
+    pulseON(410);
+    pulseOFF(3580);
+    pulseON(400);
+    pulseOFF(63200);
+  }                            
+  //End of IR LED code :)
+  if(var != 1)  {
+    digitalWrite(IndicatorPin, HIGH); 
+    digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
+  }
+}
+
+
 
 void bulbmode(int del)  {
   if (del <= 3000)  {
