@@ -1,0 +1,7 @@
+{
+    "baudrate": "9600", 
+    "global_setting": true, 
+    "language": "English", 
+    "serial_port": "COM1", 
+    "sketchbook_root": "C:\\Users\\Tom\\Documents\\Arduino"
+}

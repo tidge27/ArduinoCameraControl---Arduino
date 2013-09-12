@@ -1,6 +1,7 @@
 /*  This code is for the 2013 version of the 'BT Camera Contoller' built by Tom Garry, and Rory Crispin  */
 
 
+
 #include <Wire.h>
 #include <Time.h> 
 
@@ -8,13 +9,13 @@
   time_t t;
   
 //    Outputs
-int powerSwitch = 6;      // the pin on the power switch
-int IndicatorPin = 9;     // the pin that the indicator LED is attached to
+int powerSwitch = 6;       // the pin on the power switch
+int IndicatorPin = 9;      // the pin that the indicator LED is attached to
 int IRPin = 10;            // the pin that the IR LED is attached to
 int FlashPin = 13;         // the pin that the flash optocoupler is attached to
 int ValvePin = 12;         // the pin that the solenoid valve transistor is attached to
 int ActivePin = 8;         // the pin that tells us when something is working away (e.g. a timelapse sequence)
-int CableRelease = 7;               // Cable relese pin
+int CableRelease = 7;      // Cable relese pin
 
 //    Inputs
 int TriggerPin = 9;        // the pin that the trigger push button is attached to
@@ -159,6 +160,7 @@ void loop() {
         int tlhors = var3;
         int tlshot = var4;
         int infinite = var4;
+        int accessmove = var5;
         
         if (infinite == 0)  {
           tlshot = 10;
@@ -167,13 +169,22 @@ void loop() {
         shuttertrig();
         for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
         
-        if(infinite == 0)  {
-          i = 2;
-        }
+          if(infinite == 0)  {
+            i = 2;
+          }
         
         
           clockrst();
           for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
+
+            if(accessmove >= 1) {
+              digitalWrite(ValvePin, HIGH);
+              delay(accessmove);
+              digitalWrite(ValvePin, LOW);  
+            }
+
+
+
             if((now()-t) >= tlsecs)  {
               v = 5;
             }
@@ -184,7 +195,7 @@ void loop() {
               v = 5;
               i = tlshot + 10;
             }
-            }
+          }
           shuttertrig();
         }
         
