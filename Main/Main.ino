@@ -128,7 +128,8 @@ void loop() {
       
       if(var0 == 1)  {    //Simple snapshot mode
         int delsecs = var1;
-        int bulbmd = var2;
+        int bulbdel = var2;
+        int bulbmd = var3;
         clockrst();
         for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
           if((now()-t) >= delsecs)  {
@@ -144,7 +145,11 @@ void loop() {
         if(bulbmd == 0)  {    
           shuttertrig(); // Take a normal photo.
           } else  {
-          bulbmode(bulbmd);  // Use the bulb function to keep the shutter open
+            if(bulbdel == 0){
+                
+            } else{ 
+              bulbmode(bulbdel);  // Use the bulb function to keep the shutter open
+          }
         }
       }
       
