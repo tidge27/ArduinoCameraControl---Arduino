@@ -178,15 +178,17 @@ void loop() {
             i = 2;
           }
 
-
-          clockrst();
-          for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
-
-            if(accessmove >= 1) {
+          if(accessmove >= 1) {
               digitalWrite(ValvePin, HIGH);
               delay(accessmove);
               digitalWrite(ValvePin, LOW);  
             }
+
+
+          clockrst();
+          for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
+
+            
 
 
 
