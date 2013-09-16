@@ -304,7 +304,7 @@ void loop() {
       
       
       
-      if(var0 == 5)  {    //Simple timplapse mode
+      if(var0 == 5)  {    //HDR timelapse mode
         int tlsecs = var1;
         int tlmins = var2;
         int tlhors = var3;
@@ -313,6 +313,7 @@ void loop() {
         int s2 = var6;
         int s3 = var7;
         int infinite = var4;
+        int accessmove = var8;
         
         if (infinite == 0)  {
           tlshot = 10;
@@ -323,6 +324,19 @@ void loop() {
 
           if(infinite == 0)  {
             i = 2;
+          }
+
+          if((accessmove >= 1)) {
+            if(tlsecs >= 2) {
+              delay(700);
+            } else  {
+              delay(tlsecs * 400);
+            }
+          }
+          if(accessmove >= 1) {
+            digitalWrite(ValvePin, HIGH);
+            delay(accessmove);
+            digitalWrite(ValvePin, LOW);  
           }
 
 
