@@ -178,11 +178,18 @@ void loop() {
             i = 2;
           }
 
-          if(accessmove >= 1) {
-              digitalWrite(ValvePin, HIGH);
-              delay(accessmove);
-              digitalWrite(ValvePin, LOW);  
+          if((accessmove >= 1)) {
+            if(tlsecs >= 2) {
+              delay(700);
+            } else  {
+              delay(tlsecs * 400);
             }
+          }
+          if(accessmove >= 1) {
+            digitalWrite(ValvePin, HIGH);
+            delay(accessmove);
+            digitalWrite(ValvePin, LOW);  
+          }
 
 
           clockrst();
