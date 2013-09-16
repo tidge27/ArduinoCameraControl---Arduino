@@ -67,10 +67,14 @@ void setup() {
 void loop() {
   // see if there's incoming serial data:
   if(digitalRead(powerSwitch) == HIGH)  {
-    delay(1000);
-    if(digitalRead(powerSwitch) == HIGH)  {
-      digitalWrite(5, LOW);
+    clockrst();
+    digitalWrite(ActivePin, HIGH); 
+    while(digitalRead(powerSwitch) == HIGH)  {
+      if((now()-t) >= 2)  {
+        digitalWrite(5, LOW);
+      }
     }
+    digitalWrite(ActivePin, LOW); 
   }
   //Here we set upt a loop to continuously check if the device has been left on for more than 5 minuites.
   if((now()-t) >= 300)  {
