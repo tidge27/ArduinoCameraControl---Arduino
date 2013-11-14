@@ -31,16 +31,7 @@ int TriggerPin = 9;        // the pin that the trigger push button is attached t
 int LDRPin = 4;            // the analogue pin that the LDR circuit is attached to
 int MicPin = 5;            // the analogue pin that the indicator LED is attached to
 
-int var0;          // Catches the data from the BT module  This is basically the 'mode' for the system
-int var1;          // Catches the data from the BT module
-int var2;          // Catches the data from the BT module
-int var3;          // Catches the data from the BT module
-int var4;          // Catches the data from the BT module
-int var5;          // Catches the data from the BT module
-int var6;          // Catches the data from the BT module
-int var7;          // Catches the data from the BT module
-int var8;          // Catches the data from the BT module
-int var9;          // Catches the data from the BT module
+int vars[50];
 
 int micval;
 int LDRval;
@@ -94,58 +85,50 @@ void loop() {
   }
 
 
-  while (Serial.available() > 0) {
-    // read the oldest byte in the serial buffer:
-    var0 = Serial.parseInt();
-    var1 = Serial.parseInt();
-    var2 = Serial.parseInt();
-    var3 = Serial.parseInt();
-    var4 = Serial.parseInt();
-    var5 = Serial.parseInt();
-    var6 = Serial.parseInt();
-    var7 = Serial.parseInt();
-    var8 = Serial.parseInt();
-    var9 = Serial.parseInt();
-
-    if(Serial.read() == '!')  {
-
-
-      while(Serial.available())  {
-        Serial.read();
+  if(Serial.available() > 0)  {
+    for(int i=0;i<50;i++){
+      vars[i] = 0;
+    }
+    int a = 50;
+    for(int i=0;i<a;i++)  {
+      vars[i] = Serial.parseInt();
+      if(Serial.read() == '!')  {
+        a=i;
       }
+    }
 
       digitalWrite(ActivePin, HIGH);
       /*
-      Serial.print("Var0: ");    //Debugging stuff ;)
-       Serial.println(var0);
-       Serial.print("Var1: ");
-       Serial.println(var1);
-       Serial.print("Var2: ");
-       Serial.println(var2);
-       Serial.print("Var3: ");
-       Serial.println(var3);
-       Serial.print("Var4: ");
-       Serial.println(var4);
-       Serial.print("Var5: ");
-       Serial.println(var5);
-       Serial.print("Var6: ");
-       Serial.println(var6);
-       Serial.print("Var7: ");
-       Serial.println(var7);
-       Serial.print("Var8: ");
-       Serial.println(var8);
-       Serial.print("Var9: ");
-       Serial.println(var9);
+      Serial.print("vars[0]: ");    //Debugging stuff ;)
+       Serial.println(vars[0]);
+       Serial.print("vars[1]: ");
+       Serial.println(vars[1]);
+       Serial.print("vars[2]: ");
+       Serial.println(vars[2]);
+       Serial.print("vars[3]: ");
+       Serial.println(vars[3]);
+       Serial.print("vars[4]: ");
+       Serial.println(vars[4]);
+       Serial.print("vars[5]: ");
+       Serial.println(vars[5]);
+       Serial.print("vars[6]: ");
+       Serial.println(vars[6]);
+       Serial.print("vars[7]: ");
+       Serial.println(vars[7]);
+       Serial.print("vars[8]: ");
+       Serial.println(vars[8]);
+       Serial.print("vars[9]: ");
+       Serial.println(vars[9]);
        Serial.println("All sent out!");
        */
 
 
 
 
-      if(var0 == 1)  {    //Simple snapshot mode
-        int delsecs = var1;
-        int bulbdel = var2;
-        int bulbmd = var3;
+      if(vars[0] == 1)  {    //Simple snapshot mode
+        int delsecs = vars[1];
+        int bulbdel = vars[2];
+        int bulbmd = vars[3];
         clockrst();
         for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
           if((now()-t) >= delsecs)  {
@@ -177,13 +160,13 @@ void loop() {
 
 
 
-      if(var0 == 2)  {    //Simple timplapse mode
-        int tlsecs = var1;
-        int tlmins = var2;
-        int tlhors = var3;
-        int tlshot = var4;
-        int infinite = var4;
-        int accessmove = var5;
+      if(vars[0] == 2)  {    //Simple timplapse mode
+        int tlsecs = vars[1];
+        int tlmins = vars[2];
+        int tlhors = vars[3];
+        int tlshot = vars[4];
+        int infinite = vars[4];
+        int accessmove = vars[5];
 
         if (infinite == 0)  {
           tlshot = 10;
@@ -238,12 +221,12 @@ void loop() {
 
 
 
-      if(var0 == 3)  {              //Simple shutter Mic trigger or LDR
-        int MicSensitivity = var1;
-        int LDRSensitivity = var2;
-        int delaytime = var3;
-        int persistant = var4;
-        boolean bulbflash = var5;
+      if(vars[0] == 3)  {              //Simple shutter Mic trigger or LDR
+        int MicSensitivity = vars[1];
+        int LDRSensitivity = vars[2];
+        int delaytime = vars[3];
+        int persistant = vars[4];
+        boolean bulbflash = vars[5];
         int normal = 0;
         while(persistant >= 1 || normal == 0){
           normal = 1;
@@ -285,14 +268,14 @@ void loop() {
 
 
 
-      if(var0 == 4)  {    //SFlash trig mic LDR
+      if(vars[0] == 4)  {    //SFlash trig mic LDR
 
-        int MicSensitivity = var1;
-        int LDRSensitivity = var2;
-        int dripslengthvar = var3;
-        int dripnumber = var4;
-        int delaybetweendrips = var5;
-        int flashdelay = var6;  // The delay from the flash after 
+        int MicSensitivity = vars[1];
+        int LDRSensitivity = vars[2];
+        int dripslengthvar = vars[3];
+        int dripnumber = vars[4];
+        int delaybetweendrips = vars[5];
+        int flashdelay = vars[6];  // The delay from the flash after 
 
         shuttertrig();
         for(int var = 0; var < dripnumber;var++)  {
@@ -323,16 +306,16 @@ void loop() {
 
 
 
-      if(var0 == 5)  {    //HDR timelapse mode
-        int tlsecs = var1;
-        int tlmins = var2;
-        int tlhors = var3;
-        int tlshot = var4;
-        int s1 = var5;
-        int s2 = var6;
-        int s3 = var7;
-        int infinite = var4;
-        int accessmove = var8;
+      if(vars[0] == 5)  {    //HDR timelapse mode
+        int tlsecs = vars[1];
+        int tlmins = vars[2];
+        int tlhors = vars[3];
+        int tlshot = vars[4];
+        int s1 = vars[5];
+        int s2 = vars[6];
+        int s3 = vars[7];
+        int infinite = vars[4];
+        int accessmove = vars[8];
 
         if (infinite == 0)  {
           tlshot = 10;
@@ -382,12 +365,12 @@ void loop() {
 
 
 
-      if(var0 == 6)  {    //Servo timelapse mode
-        int sx = var1;
-        int sy = var2;
-        int ex = var3;
-        int ey = var4;
-        int tlsecs = var5;
+      if(vars[0] == 6)  {    //Servo timelapse mode
+        int sx = vars[1];
+        int sy = vars[2];
+        int ex = vars[3];
+        int ey = vars[4];
+        int tlsecs = vars[5];
         int tlmins = 0;
         int tlhors = 0;
         int tlshot = 180;
@@ -464,8 +447,8 @@ void loop() {
 
 
 
-      if(var0 == 9)  {    // This is used to zero the value for both the mic and the LDR channels
-        if(var1 == 99)  {
+      if(vars[0] == 9)  {    // This is used to zero the value for both the mic and the LDR channels
+        if(vars[1] == 99)  {
           digitalWrite(5, LOW);
         }
         calsensors();
@@ -478,7 +461,7 @@ void loop() {
     }
     clockrst();  
   }
-}
+
 
 //Start of trigger code
 void pulseIR()  {
