@@ -469,13 +469,17 @@ void pulseIR()  {
   if(cameraType == "cannon")  {
     Serial.println("cannon");
     for (int i=0; i < 16; i++) {
-      pulseON(10);                                      // pulse for 2000 uS (Microseconds)
-      pulseOFF(10);                                    // turn pulse off for 27850 us
+      digitalWrite(IRPin, HIGH);                       // turn IR on
+      pulseOFF(5);                              // half the clock cycle for 38Khz (26.32×10-6s) - e.g. the 'on' part of our wave
+      digitalWrite(IRPin, LOW);                                       // pulse for 2000 uS (Microseconds)
+      pulseOFF(5);                                    // turn pulse off for 27850 us
     }         
     pulseOFF(7330);
     for (int i=0; i < 16; i++) {
-      pulseON(10);                                      // pulse for 2000 uS (Microseconds)
-      pulseOFF(10);                                    // turn pulse off for 27850 us
+      digitalWrite(IRPin, HIGH);                       // turn IR on
+      pulseOFF(5);                              // half the clock cycle for 38Khz (26.32×10-6s) - e.g. the 'on' part of our wave
+      digitalWrite(IRPin, LOW);                                       // pulse for 2000 uS (Microseconds)
+      pulseOFF(5);                                    // turn pulse off for 27850 us
     }
   }
   else{
