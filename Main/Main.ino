@@ -1,3 +1,5 @@
+
+
 /*  This code is for the 2013 version of the 'BT Camera Contoller' built by Tom Garry, and Rory Crispin  */
 
 
@@ -5,6 +7,7 @@
 #include <Wire.h>
 #include <Time.h>
 #include "Servo.h"
+#include <EEPROM.h>
 
 // servo stuff
 Servo myservox;
@@ -15,23 +18,29 @@ Servo myservoy;
 time_t t;
 
 //    Camera manufacturer
-String cameraType = "cannon";
+
+//The following is the list of variables for inputs and outputs...
+
+
+int cameraType = EEPROM.read(0);   //Please refer to the documentation to find out which camera this value refers to...
 
 //    Outputs
-int powerSwitch = 6;       // the pin on the power switch
-int IndicatorPin = 9;      // the pin that the indicator LED is attached to
-int IRPin = 10;            // the pin that the IR LED is attached to
-int FlashPin = 13;         // the pin that the flash optocoupler is attached to
-int ValvePin = 12;         // the pin that the solenoid valve transistor is attached to
-int ActivePin = 8;         // the pin that tells us when something is working away (e.g. a timelapse sequence)
-int CableRelease = 7;      // Cable relese pin
+int powerSwitch    = 6;          // the pin on the power switch to check status
+int IndicatorPin   = 9;          // the pin that the indicator LED is attached to
+int IRPin          = 10;         // the pin that the IR LED is attached to
+int FlashPin       = 13;         // the pin that the flash optocoupler is attached to
+int PwroutPin      = 12;         // the pin that the power ouput transistor is attached to
+int ActivePin      = 8;          // the pin that tells us when something is working away (e.g. a timelapse sequence)
+int CableRelease   = 7;          // Cable relese pin
 
 //    Inputs
 int TriggerPin = 9;        // the pin that the trigger push button is attached to
-int LDRPin = 4;            // the analogue pin that the LDR circuit is attached to
-int MicPin = 5;            // the analogue pin that the indicator LED is attached to
+int LDRPin[] = {
+  4,14};            // the analogue pin that the LDR circuit is attached to
+int MicPin[] = {
+  5,15};            // the analogue pin that the indicator LED is attached to
 
-int vars[50];
+long int vars[50];
 
 int micval;
 int LDRval;
@@ -53,7 +62,7 @@ void setup() {
   pinMode(IndicatorPin, OUTPUT);  // Setup the IndicatorPin as an output
   pinMode(IRPin, OUTPUT);  // Setup the IRPin as an output
   pinMode(FlashPin, OUTPUT);  // Setup the IRPin as an output
-  pinMode(ValvePin, OUTPUT);  // Setup the IRPin as an output
+  pinMode(PwroutPin, OUTPUT);  // Setup the IRPin as an output
   pinMode(ActivePin, OUTPUT);  // Setup the IRPin as an output
   pinMode(CableRelease, OUTPUT); //Cable release
 
@@ -64,7 +73,8 @@ void setup() {
 
   }
   clockrst();
-  calsensors();
+  calsensors(0);
+  calsensors(1);
 }
 
 void loop() {
@@ -74,6 +84,7 @@ void loop() {
     digitalWrite(ActivePin, HIGH); 
     while(digitalRead(powerSwitch) == HIGH)  {
       if((now()-t) >= 2)  {
+        digitalWrite(ActivePin, LOW); 
         digitalWrite(5, LOW);
       }
     }
@@ -97,62 +108,62 @@ void loop() {
       }
     }
 
-      digitalWrite(ActivePin, HIGH);
-      /*
+    digitalWrite(ActivePin, HIGH);
+    /*
       Serial.print("vars[0]: ");    //Debugging stuff ;)
-       Serial.println(vars[0]);
-       Serial.print("vars[1]: ");
-       Serial.println(vars[1]);
-       Serial.print("vars[2]: ");
-       Serial.println(vars[2]);
-       Serial.print("vars[3]: ");
-       Serial.println(vars[3]);
-       Serial.print("vars[4]: ");
-       Serial.println(vars[4]);
-       Serial.print("vars[5]: ");
-       Serial.println(vars[5]);
-       Serial.print("vars[6]: ");
-       Serial.println(vars[6]);
-       Serial.print("vars[7]: ");
-       Serial.println(vars[7]);
-       Serial.print("vars[8]: ");
-       Serial.println(vars[8]);
-       Serial.print("vars[9]: ");
-       Serial.println(vars[9]);
-       Serial.println("All sent out!");
-       */
+     Serial.println(vars[0]);
+     Serial.print("vars[1]: ");
+     Serial.println(vars[1]);
+     Serial.print("vars[2]: ");
+     Serial.println(vars[2]);
+     Serial.print("vars[3]: ");
+     Serial.println(vars[3]);
+     Serial.print("vars[4]: ");
+     Serial.println(vars[4]);
+     Serial.print("vars[5]: ");
+     Serial.println(vars[5]);
+     Serial.print("vars[6]: ");
+     Serial.println(vars[6]);
+     Serial.print("vars[7]: ");
+     Serial.println(vars[7]);
+     Serial.print("vars[8]: ");
+     Serial.println(vars[8]);
+     Serial.print("vars[9]: ");
+     Serial.println(vars[9]);
+     Serial.println("All sent out!");
+     */
 
 
 
 
-      if(vars[0] == 1)  {    //Simple snapshot mode
-        int delsecs = vars[1];
-        int bulbdel = vars[2];
-        int bulbmd = vars[3];
-        clockrst();
-        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
-          if((now()-t) >= delsecs)  {
-            v = 5;
-          }
-          if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-            while(Serial.available())  {
-              Serial.read();
-            }
-            v = 5;
-          }
+    if(vars[0] == 1)  {    //Simple snapshot mode
+      int delsecs = vars[1];
+      int bulbdel = vars[2];
+      int bulbmd = vars[3];
+      clockrst();
+      for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
+        if((now()-t) >= delsecs)  {
+          v = 5;
         }
-        if(bulbmd == 0)  {    
-          shuttertrig(); // Take a normal photo.
+        if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
+          while(Serial.available())  {
+            Serial.read();
+          }
+          v = 5;
+        }
+      }
+      if(bulbmd == 0)  {    
+        shuttertrig(); // Take a normal photo.
+      } 
+      else  {
+        if(bulbdel == 0){
+
         } 
-        else  {
-          if(bulbdel == 0){
-
-          } 
-          else{ 
-            bulbmode(bulbdel);  // Use the bulb function to keep the shutter open
-          }
+        else{ 
+          bulbmode(bulbdel);  // Use the bulb function to keep the shutter open
         }
       }
+    }
 
 
 
@@ -160,313 +171,325 @@ void loop() {
 
 
 
-      if(vars[0] == 2)  {    //Simple timplapse mode
-        int tlsecs = vars[1];
-        int tlmins = vars[2];
-        int tlhors = vars[3];
-        int tlshot = vars[4];
-        int infinite = vars[4];
-        int accessmove = vars[5];
+    if(vars[0] == 2)  {    //Simple timplapse mode
+      int tlsecs = vars[1];
+      int tlmins = vars[2];
+      int tlhors = vars[3];
+      int tlshot = vars[4];
+      int infinite = vars[4];
+      int accessmove = vars[5];
 
-        if (infinite == 0)  {
-          tlshot = 10;
-        }
-        tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
-        shuttertrig();
-        for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
-
-          if(infinite == 0)  {
-            i = 2;
-          }
-
-          if((accessmove >= 1)) {
-            if(tlsecs >= 2) {
-              delay(700);
-            } 
-            else  {
-              delay(tlsecs * 400);
-            }
-          }
-          if(accessmove >= 1) {
-            digitalWrite(ValvePin, HIGH);
-            delay(accessmove);
-            digitalWrite(ValvePin, LOW);  
-          }
-
-
-          clockrst();
-          for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
-
-
-
-
-
-            if((now()-t) >= tlsecs)  {
-              v = 5;
-            }
-            if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-              while(Serial.available())  {
-                Serial.read();
-              }
-              v = 5;
-              i = tlshot + 10;
-            }
-          }
-          shuttertrig();
-        }
-
+      if (infinite == 0)  {
+        tlshot = 10;
       }
+      tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
+      shuttertrig();
+      for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
 
-
-
-
-
-      if(vars[0] == 3)  {              //Simple shutter Mic trigger or LDR
-        int MicSensitivity = vars[1];
-        int LDRSensitivity = vars[2];
-        int delaytime = vars[3];
-        int persistant = vars[4];
-        boolean bulbflash = vars[5];
-        int normal = 0;
-        while(persistant >= 1 || normal == 0){
-          normal = 1;
-
-          if(bulbflash) {
-            bulbstartend();
-          }
-
-          for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
-            if(analogRead(MicPin) > (micval + MicSensitivity) || analogRead(MicPin) < (micval - MicSensitivity) || analogRead(LDRPin) > (LDRval + LDRSensitivity) || analogRead(LDRPin) < (LDRval - LDRSensitivity))  {
-              delay(delaytime);
-              flashtrig();
-              if(!bulbflash) {
-                shuttertrig();
-              }
-              v = 5;
-            }
-            if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-              while(Serial.available())  {
-                Serial.read();
-              }
-              v = 5;
-              persistant = 0;
-            }
-          }
-
-          if(persistant >= 1)   {
-            delay(1000);
-          }
-
-          if(bulbflash) {
-            bulbstartend();
-          }
-        }
-      }
-
-
-
-
-
-
-      if(vars[0] == 4)  {    //SFlash trig mic LDR
-
-        int MicSensitivity = vars[1];
-        int LDRSensitivity = vars[2];
-        int dripslengthvar = vars[3];
-        int dripnumber = vars[4];
-        int delaybetweendrips = vars[5];
-        int flashdelay = vars[6];  // The delay from the flash after 
-
-        shuttertrig();
-        for(int var = 0; var < dripnumber;var++)  {
-          delay(delaybetweendrips);
-          driptrig(dripslengthvar);
-        }
-        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
-          if(analogRead(MicPin) > (micval + MicSensitivity) || analogRead(MicPin) < (micval - MicSensitivity) || analogRead(LDRPin) > (LDRval + LDRSensitivity) || analogRead(LDRPin) < (LDRval - LDRSensitivity))  {
-            v = 5;
-          }
-          if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-            while(Serial.available())  {
-              Serial.read();
-            }
-            v = 5;
-          }
+        if(infinite == 0)  {
+          i = 2;
         }
 
-        if(flashdelay > 0)  {
-          delay(flashdelay);                          //A little delay
-        }
-
-        flashtrig();
-        shuttertrig();
-      }
-
-
-
-
-
-      if(vars[0] == 5)  {    //HDR timelapse mode
-        int tlsecs = vars[1];
-        int tlmins = vars[2];
-        int tlhors = vars[3];
-        int tlshot = vars[4];
-        int s1 = vars[5];
-        int s2 = vars[6];
-        int s3 = vars[7];
-        int infinite = vars[4];
-        int accessmove = vars[8];
-
-        if (infinite == 0)  {
-          tlshot = 10;
-        }
-        tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
-        hdrphoto(s1, s2, s3);
-        for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
-
-          if(infinite == 0)  {
-            i = 2;
-          }
-
-          if((accessmove >= 1)) {
-            if(tlsecs >= 2) {
-              delay(700);
-            } 
-            else  {
-              delay(tlsecs * 400);
-            }
-          }
-          if(accessmove >= 1) {
-            digitalWrite(ValvePin, HIGH);
-            delay(accessmove);
-            digitalWrite(ValvePin, LOW);  
-          }
-
-
-          clockrst();
-          for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
-            if((now()-t) >= tlsecs)  {
-              v = 5;
-            }
-            if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-              while(Serial.available())  {
-                Serial.read();
-              }
-              v = 5;
-              i = tlshot + 10;
-            }
-          }
-          hdrphoto(s1, s2, s3);
-        }
-
-      }
-
-
-
-
-
-      if(vars[0] == 6)  {    //Servo timelapse mode
-        int sx = vars[1];
-        int sy = vars[2];
-        int ex = vars[3];
-        int ey = vars[4];
-        int tlsecs = vars[5];
-        int tlmins = 0;
-        int tlhors = 0;
-        int tlshot = 180;
-        int infinite = 180;
-
-
-        if (infinite == 0)  {
-          tlshot = 10;
-        }
-        tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
-        shuttertrig();
-        for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
-
-          if(infinite == 0)  {
-            i = 2;
-          }
-
-
+        if((accessmove >= 1)) {
           if(tlsecs >= 2) {
             delay(700);
           } 
           else  {
             delay(tlsecs * 400);
           }
-
-          if((ex-sx)>0) {
-            myservox.write(((ex-sx)/180)*tlshot);
-            Serial.println(ex);
-            Serial.println(sx);
-            Serial.println(ex-sx);
-            Serial.println(i);
-            Serial.println(((ex-sx)/180)*i);
-          } 
-          else{
-            myservox.write(180-((sx-ex)/180)*i);
-            Serial.println(180-((sx-ex)/180)*i);
-          }
-          if((ey-sy)>0) {
-            myservoy.write(((ey-sy)/180)*i);
-          } 
-          else{
-            myservoy.write(180-((sy-ey)/180)*i);
-          }
-
-
-
-
-          clockrst();
-          for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
-
-
-
-
-
-            if((now()-t) >= tlsecs)  {
-              v = 5;
-            }
-            if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-              while(Serial.available())  {
-                Serial.read();
-              }
-              v = 5;
-              i = tlshot + 10;
-            }
-          }
-          shuttertrig();
+        }
+        if(accessmove >= 1) {
+          digitalWrite(PwroutPin, HIGH);
+          delay(accessmove);
+          digitalWrite(PwroutPin, LOW);  
         }
 
-      }
+
+        clockrst();
+        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
 
 
 
 
 
-
-
-      if(vars[0] == 9)  {    // This is used to zero the value for both the mic and the LDR channels
-        if(vars[1] == 99)  {
-          digitalWrite(5, LOW);
+          if((now()-t) >= tlsecs)  {
+            v = 5;
+          }
+          if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
+            while(Serial.available())  {
+              Serial.read();
+            }
+            v = 5;
+            i = tlshot + 10;
+          }
         }
-        calsensors();
+        shuttertrig();
       }
 
-
-
-
-      digitalWrite(ActivePin, LOW);  
     }
-    clockrst();  
+
+
+
+
+
+    if(vars[0] == 3)  {              //Simple shutter Mic trigger or LDR
+      int MicSensitivity = vars[1];  //Microphopne sensitivity
+      int LDRSensitivity = vars[2];  //LDR sensitivity
+      int delaytime = vars[3];       //Delay after trigger
+      int persistant = vars[4];      //Persistant mode - repeat indefinitely
+      boolean bulbflash = vars[5];   //Buld flash mode for ultra high speed
+      int extorint = vars[6];        //External or internal triggers
+      int normal = 0;
+      while(persistant >= 1 || normal == 0){
+        normal = 1;
+
+        if(bulbflash) {
+          bulbstartend();
+        }
+
+        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
+          if(analogRead(MicPin[extorint]) > (micval + MicSensitivity) || analogRead(MicPin[extorint]) < (micval - MicSensitivity) || analogRead(LDRPin[extorint]) > (LDRval + LDRSensitivity) || analogRead(LDRPin[extorint]) < (LDRval - LDRSensitivity))  {
+            delay(delaytime);
+            flashtrig();
+            if(!bulbflash) {
+              shuttertrig();
+            }
+            v = 5;
+          }
+          if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
+            while(Serial.available())  {
+              Serial.read();
+            }
+            v = 5;
+            persistant = 0;
+          }
+        }
+
+        if(persistant >= 1)   {
+          delay(1000);
+        }
+
+        if(bulbflash) {
+          bulbstartend();
+        }
+      }
+    }
+
+
+
+
+
+
+    if(vars[0] == 4)  {    //SFlash trig mic LDR
+
+      int MicSensitivity = vars[1];
+      int LDRSensitivity = vars[2];
+      int dripslengthvar = vars[3];
+      int dripnumber = vars[4];
+      int delaybetweendrips = vars[5];
+      int flashdelay = vars[6];  // The delay from the flash after 
+      int extorint = vars[6];        //External or internal triggers
+      shuttertrig();
+      for(int var = 0; var < dripnumber;var++)  {
+        delay(delaybetweendrips);
+        driptrig(dripslengthvar);
+      }
+      for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
+        if(analogRead(MicPin[extorint]) > (micval + MicSensitivity) || analogRead(MicPin[extorint]) < (micval - MicSensitivity) || analogRead(LDRPin[extorint]) > (LDRval + LDRSensitivity) || analogRead(LDRPin[extorint]) < (LDRval - LDRSensitivity))  {
+          v = 5;
+        }
+        if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
+          while(Serial.available())  {
+            Serial.read();
+          }
+          v = 5;
+        }
+      }
+
+      if(flashdelay > 0)  {
+        delay(flashdelay);                          //A little delay
+      }
+
+      flashtrig();
+      shuttertrig();
+    }
+
+
+
+
+
+    if(vars[0] == 5)  {    //HDR timelapse mode
+      int tlsecs = vars[1];
+      int tlmins = vars[2];
+      int tlhors = vars[3];
+      int tlshot = vars[4];
+      int s1 = vars[5];
+      int s2 = vars[6];
+      int s3 = vars[7];
+      int infinite = vars[4];
+      int accessmove = vars[8];
+
+      if (infinite == 0)  {
+        tlshot = 10;
+      }
+      tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
+      hdrphoto(s1, s2, s3);
+      for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
+
+        if(infinite == 0)  {
+          i = 2;
+        }
+
+        if((accessmove >= 1)) {
+          if(tlsecs >= 2) {
+            delay(700);
+          } 
+          else  {
+            delay(tlsecs * 400);
+          }
+        }
+        if(accessmove >= 1) {
+          digitalWrite(PwroutPin, HIGH);
+          delay(accessmove);
+          digitalWrite(PwroutPin, LOW);  
+        }
+
+
+        clockrst();
+        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
+          if((now()-t) >= tlsecs)  {
+            v = 5;
+          }
+          if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
+            while(Serial.available())  {
+              Serial.read();
+            }
+            v = 5;
+            i = tlshot + 10;
+          }
+        }
+        hdrphoto(s1, s2, s3);
+      }
+
+    }
+
+
+
+
+
+    if(vars[0] == 6)  {    //Servo timelapse mode
+      int sx = vars[1];
+      int sy = vars[2];
+      int ex = vars[3];
+      int ey = vars[4];
+      int tlsecs = vars[5];
+      int tlmins = 0;
+      int tlhors = 0;
+      int tlshot = 180;
+      int infinite = 180;
+
+
+      if (infinite == 0)  {
+        tlshot = 10;
+      }
+      tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
+      shuttertrig();
+      for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
+
+        if(infinite == 0)  {
+          i = 2;
+        }
+
+
+        if(tlsecs >= 2) {
+          delay(700);
+        } 
+        else  {
+          delay(tlsecs * 400);
+        }
+
+        if((ex-sx)>0) {
+          myservox.write(((ex-sx)/180)*tlshot);
+          Serial.println(ex);
+          Serial.println(sx);
+          Serial.println(ex-sx);
+          Serial.println(i);
+          Serial.println(((ex-sx)/180)*i);
+        } 
+        else{
+          myservox.write(180-((sx-ex)/180)*i);
+          Serial.println(180-((sx-ex)/180)*i);
+        }
+        if((ey-sy)>0) {
+          myservoy.write(((ey-sy)/180)*i);
+        } 
+        else{
+          myservoy.write(180-((sy-ey)/180)*i);
+        }
+
+
+
+
+        clockrst();
+        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
+
+
+
+
+
+          if((now()-t) >= tlsecs)  {
+            v = 5;
+          }
+          if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
+            while(Serial.available())  {
+              Serial.read();
+            }
+            v = 5;
+            i = tlshot + 10;
+          }
+        }
+        shuttertrig();
+      }
+
+    }
+
+
+
+
+
+
+
+    if(vars[0] == 9)  {    // This is used to zero the value for both the mic and the LDR channels
+
+      if(vars[1] == 99)  {    //9,99!  Initiates power off
+        digitalWrite(5, LOW);
+      }
+
+      if(vars[1] == 1)  {    //9,1!Recalibrate the sensors
+        calsensors(0);
+        calsensors(1);
+      }
+
+      if(vars[1] == 2)  {   //0,2,X!  Set camera type
+        EEPROM.write(0, vars[2]);
+        cameraType = vars[2];
+      }
+
+    }
+
+
+
+
+    digitalWrite(ActivePin, LOW);  
   }
+   
+}
 
 
 //Start of trigger code
 void pulseIR()  {
   Serial.println("photo");
-  if(cameraType == "cannon")  {
+  if(cameraType == 1)  {
     Serial.println("cannon");
     for (int i=0; i < 16; i++) {
       digitalWrite(IRPin, HIGH);                       // turn IR on
@@ -535,9 +558,9 @@ void flashtrig()  {
 
 void driptrig(int delayvar)  {
   if(delayvar > 0)  {
-    digitalWrite(ValvePin, HIGH);    //Trigger the solenoid valve
+    digitalWrite(PwroutPin, HIGH);    //Trigger the solenoid valve
     delay(delayvar);                          //A little delay
-    digitalWrite(ValvePin, LOW);     //Turn it off again
+    digitalWrite(PwroutPin, LOW);     //Turn it off again
   }
 }  
 
@@ -545,9 +568,9 @@ void clockrst()  {  //Used to set the time variable t to the current time, allow
   t = now();
 }
 
-void calsensors()  {
-  micval = analogRead(MicPin);
-  LDRval = analogRead(LDRPin);
+void calsensors(int intorext)  {
+  micval = analogRead(MicPin[intorext]);
+  LDRval = analogRead(LDRPin[intorext]);
 }
 
 void hdrphoto(int s1, int s2, int s3)  {
@@ -622,4 +645,6 @@ void bulbmode(int del)  {
     digitalWrite(CableRelease, LOW);  //Turn the LED off again   
   }
 }
+
+
 
