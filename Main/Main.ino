@@ -172,18 +172,26 @@ void loop() {
 
 
     if(vars[0] == 2)  {    //Simple timplapse mode
-      int tlsecs = vars[1];
+      unsigned long tlsecs = vars[1];
       int tlmins = vars[2];
       int tlhors = vars[3];
       int tlshot = vars[4];
       int infinite = vars[4];
       int accessmove = vars[5];
+      int rampstart = vars[6];
+      int rampend = vars[7];
+      int rampdiff = round(10*(rampend - rampstart) / tlshot);
 
       if (infinite == 0)  {
         tlshot = 10;
       }
       tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
-      shuttertrig();
+      if(rampstart == 0 && rampend == 0)  {
+        shuttertrig();
+      }  
+      else  {
+        bulbmode(rampstart);
+      }
       for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
 
         if(infinite == 0)  {
@@ -223,7 +231,13 @@ void loop() {
             i = tlshot + 10;
           }
         }
-        shuttertrig();
+        if(rampstart == 0 && rampend == 0)  {
+          shuttertrig();
+        }  
+        else  {
+          Serial.println(round((rampstart*10 + (rampdiff * i))/10));
+          bulbmode(round((rampstart*10 + (rampdiff * i))/10));
+        }
       }
 
     }
@@ -482,7 +496,7 @@ void loop() {
 
     digitalWrite(ActivePin, LOW);  
   }
-   
+
 }
 
 
@@ -645,6 +659,7 @@ void bulbmode(int del)  {
     digitalWrite(CableRelease, LOW);  //Turn the LED off again   
   }
 }
+
 
 
 
