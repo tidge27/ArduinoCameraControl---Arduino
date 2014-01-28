@@ -1,5 +1,4 @@
 
-
 /*  This code is for the 2013 version of the 'BT Camera Contoller' built by Tom Garry, and Rory Crispin  */
 
 
@@ -141,7 +140,7 @@ void loop() {
       int bulbdel = vars[2];
       int bulbmd = vars[3];
       clockrst();
-      for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
+      for (int v=0; v<= 1;)  {          //Here we set up a loop to continuously check if enough time has passed
         if((now()-t) >= delsecs)  {
           v = 5;
         }
@@ -172,14 +171,21 @@ void loop() {
 
 
     if(vars[0] == 2)  {    //Simple timplapse mode
-      unsigned long tlsecs = vars[1];
-      int tlmins = vars[2];
-      int tlhors = vars[3];
-      int tlshot = vars[4];
-      int infinite = vars[4];
-      int accessmove = vars[5];
-      int rampstart = vars[6];
-      int rampend = vars[7];
+    
+    //            ***** Standard Timelapse vars *****
+    
+      unsigned long tlsecs = vars[1]; //Delay Seconds
+      int tlmins = vars[2];           //Delay Delay Mins
+      int tlhors = vars[3];           //Delay Hours
+      int tlshot = vars[4];           //Number of shots  - 0 for infinite
+      int infinite = vars[4];         // Tom is an idiot  - duplicate int
+      
+     //            ***** Dolly Timelapse var *****
+      int accessmove = vars[5];       //Delay for output drive time 
+      
+     //            ***** Ramping Timelapse vars  linear *****
+      int rampstart = vars[6];        //Exposure time for bulb ramping start
+      int rampend = vars[7];          //Expusure time for bulm barming end 
       int rampdiff = round(10*(rampend - rampstart) / tlshot);
 
       if (infinite == 0)  {
@@ -249,9 +255,9 @@ void loop() {
     if(vars[0] == 3)  {              //Simple shutter Mic trigger or LDR
       int MicSensitivity = vars[1];  //Microphopne sensitivity
       int LDRSensitivity = vars[2];  //LDR sensitivity
-      int delaytime = vars[3];       //Delay after trigger
+      int delaytime = vars[3];       //Delay after trigger (milsec)
       int persistant = vars[4];      //Persistant mode - repeat indefinitely
-      boolean bulbflash = vars[5];   //Buld flash mode for ultra high speed
+      boolean bulbflash = vars[5];   //Bulb flash mode for ultra high speed
       int extorint = vars[6];        //External or internal triggers
       int normal = 0;
       while(persistant >= 1 || normal == 0){
@@ -302,13 +308,13 @@ void loop() {
       int dripnumber = vars[4];
       int delaybetweendrips = vars[5];
       int flashdelay = vars[6];  // The delay from the flash after 
-      int extorint = vars[6];        //External or internal triggers
+      int extorint = vars[7];        //External or internal triggers
       shuttertrig();
       for(int var = 0; var < dripnumber;var++)  {
         delay(delaybetweendrips);
         driptrig(dripslengthvar);
       }
-      for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
+      for (int v=0; v<= 1;)  {          //Here we set up a loop to continuously check if the mic is high or the LDR has changed
         if(analogRead(MicPin[extorint]) > (micval + MicSensitivity) || analogRead(MicPin[extorint]) < (micval - MicSensitivity) || analogRead(LDRPin[extorint]) > (LDRval + LDRSensitivity) || analogRead(LDRPin[extorint]) < (LDRval - LDRSensitivity))  {
           v = 5;
         }
@@ -348,13 +354,13 @@ void loop() {
       }
       tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
       hdrphoto(s1, s2, s3);
-      for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
+      for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part counts up the number of shots taken
 
         if(infinite == 0)  {
           i = 2;
         }
 
-        if((accessmove >= 1)) {
+        if(accessmove >= 1) {
           if(tlsecs >= 2) {
             delay(700);
           } 
