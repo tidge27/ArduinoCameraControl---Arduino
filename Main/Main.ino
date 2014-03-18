@@ -35,9 +35,9 @@ int CableRelease   = 7;          // Cable relese pin
 //    Inputs
 int TriggerPin = 9;        // the pin that the trigger push button is attached to
 int LDRPin[] = {
-  4,14};            // the analogue pin that the LDR circuit is attached to
+  16,19};            // the analogue pin that the LDR circuit is attached to
 int MicPin[] = {
-  5,15};            // the analogue pin that the indicator LED is attached to
+  17,18};            // the analogue pin that the indicator LED is attached to
 
 long int vars[50];
 
@@ -68,7 +68,7 @@ void setup() {
   digitalWrite(ActivePin, HIGH);// Indicate setup complete
   delay(200);
   digitalWrite(ActivePin, LOW);// Off again
-  while(digitalRead(powerSwitch) == HIGH)  {
+  while(digitalRead(powerSwitch) == LOW)  {
 
   }
   clockrst();
@@ -78,10 +78,10 @@ void setup() {
 
 void loop() {
   // see if there's incoming serial data:
-  if(digitalRead(powerSwitch) == HIGH)  {
+  if(digitalRead(powerSwitch) == LOW)  {
     clockrst();
     digitalWrite(ActivePin, HIGH); 
-    while(digitalRead(powerSwitch) == HIGH)  {
+    while(digitalRead(powerSwitch) == LOW)  {
       if((now()-t) >= 2)  {
         digitalWrite(ActivePin, LOW); 
         digitalWrite(5, LOW);
