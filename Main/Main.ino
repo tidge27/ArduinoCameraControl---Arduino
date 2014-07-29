@@ -5,12 +5,7 @@
 
 #include <Wire.h>
 #include <Time.h>
-#include "Servo.h"
 #include <EEPROM.h>
-
-// servo stuff
-Servo myservox;
-Servo myservoy;
 
 
 //    Time Variable
@@ -24,34 +19,33 @@ time_t t;
 int cameraType = EEPROM.read(0);   //Please refer to the documentation to find out which camera this value refers to...
 
 //    Outputs
-int powerSwitch    = 6;          // the pin on the power switch to check status
 int IndicatorPin   = 9;          // the pin that the indicator LED is attached to
 int IRPin          = 10;         // the pin that the IR LED is attached to
-int FlashPin       = 13;         // the pin that the flash optocoupler is attached to
-int PwroutPin      = 12;         // the pin that the power ouput transistor is attached to
+int FlashPin       = 4;         // the pin that the flash optocoupler is attached to
+int PwroutPin      = 5;         // the pin that the power ouput transistor is attached to
 int ActivePin      = 8;          // the pin that tells us when something is working away (e.g. a timelapse sequence)
 int CableRelease   = 7;          // Cable relese pin
 
 //    Inputs
-int TriggerPin = 9;        // the pin that the trigger push button is attached to
-int LDRPin[] = {
-  16,19};            // the analogue pin that the LDR circuit is attached to
-int MicPin[] = {
-  17,18};            // the analogue pin that the indicator LED is attached to
+int powerSwitch    = 6;          // the pin on the power switch to check status
 
+int LDRPin[] = {2,5};            // the analogue pin that the LDR circuit is attached to
+int MicPin[] = {3,4};            // the analogue pin that the indicator LED is attached to
+
+//    Variables
 long int vars[50];
 
-int micval;
-int LDRval;
+int micval[] = {0,0};
+int LDRval[] = {0,0};
+
+int bulbstartend = 0;
 
 
 void setup() {
 
-  myservox.attach(3);
-  myservoy.attach(11);
 
-  pinMode(5, OUTPUT);
-  digitalWrite(5, HIGH);
+  pinMode(PwroutPin, OUTPUT);
+  digitalWrite(PwroutPin, HIGH);
 
 
   setTime(1356998400);
@@ -61,8 +55,7 @@ void setup() {
   pinMode(IndicatorPin, OUTPUT);  // Setup the IndicatorPin as an output
   pinMode(IRPin, OUTPUT);  // Setup the IRPin as an output
   pinMode(FlashPin, OUTPUT);  // Setup the IRPin as an output
-  pinMode(PwroutPin, OUTPUT);  // Setup the IRPin as an output
-  pinMode(ActivePin, OUTPUT);  // Setup the IRPin as an output
+  pinMode(ActivePin, OUTPUT);  // Setup the ActivePin as an output
   pinMode(CableRelease, OUTPUT); //Cable release
 
   digitalWrite(ActivePin, HIGH);// Indicate setup complete
@@ -72,8 +65,7 @@ void setup() {
 
   }
   clockrst();
-  calsensors(0);
-  calsensors(1);
+  calsensors();
 }
 
 void loop() {
@@ -84,14 +76,14 @@ void loop() {
     while(digitalRead(powerSwitch) == LOW)  {
       if((now()-t) >= 2)  {
         digitalWrite(ActivePin, LOW); 
-        digitalWrite(5, LOW);
+        digitalWrite(PwoutPin, LOW);
       }
     }
     digitalWrite(ActivePin, LOW); 
   }
   //Here we set upt a loop to continuously check if the device has been left on for more than 5 minuites.
   if((now()-t) >= 300)  {
-    digitalWrite(5, LOW);
+    digitalWrite(PwroutPin, LOW);
   }
 
 
@@ -171,19 +163,19 @@ void loop() {
 
 
     if(vars[0] == 2)  {    //Simple timplapse mode
-    
-    //            ***** Standard Timelapse vars *****
-    
+
+      //            ***** Standard Timelapse vars *****
+
       unsigned long tlsecs = vars[1]; //Delay Seconds
       int tlmins = vars[2];           //Delay Delay Mins
       int tlhors = vars[3];           //Delay Hours
       int tlshot = vars[4];           //Number of shots  - 0 for infinite
       int infinite = vars[4];         // Tom is an idiot  - duplicate int
-      
-     //            ***** Dolly Timelapse var *****
+
+      //            ***** Dolly Timelapse var *****
       int accessmove = vars[5];       //Delay for output drive time 
-      
-     //            ***** Ramping Timelapse vars  linear *****
+
+      //            ***** Ramping Timelapse vars  linear *****
       int rampstart = vars[6];        //Exposure time for bulb ramping start
       int rampend = vars[7];          //Expusure time for bulm barming end 
       int rampdiff = round(10*(rampend - rampstart) / tlshot);
@@ -245,7 +237,6 @@ void loop() {
           bulbmode(round((rampstart*10 + (rampdiff * i))/10));
         }
       }
-
     }
 
 
@@ -268,7 +259,7 @@ void loop() {
         }
 
         for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if the mic is high or the LDR has changed
-          if(analogRead(MicPin[extorint]) > (micval + MicSensitivity) || analogRead(MicPin[extorint]) < (micval - MicSensitivity) || analogRead(LDRPin[extorint]) > (LDRval + LDRSensitivity) || analogRead(LDRPin[extorint]) < (LDRval - LDRSensitivity))  {
+          if(analogRead(MicPin[extorint]) > (micval[extorint] + MicSensitivity) || analogRead(MicPin[extorint]) < (micval[extorint] - MicSensitivity) || analogRead(LDRPin[extorint]) > (LDRval[extorint] + LDRSensitivity) || analogRead(LDRPin[extorint]) < (LDRval[extorint] - LDRSensitivity))  {
             delay(delaytime);
             flashtrig();
             if(!bulbflash) {
@@ -315,7 +306,7 @@ void loop() {
         driptrig(dripslengthvar);
       }
       for (int v=0; v<= 1;)  {          //Here we set up a loop to continuously check if the mic is high or the LDR has changed
-        if(analogRead(MicPin[extorint]) > (micval + MicSensitivity) || analogRead(MicPin[extorint]) < (micval - MicSensitivity) || analogRead(LDRPin[extorint]) > (LDRval + LDRSensitivity) || analogRead(LDRPin[extorint]) < (LDRval - LDRSensitivity))  {
+        if(analogRead(MicPin[extorint]) > (micval[extorint] + MicSensitivity) || analogRead(MicPin[extorint]) < (micval[extorint] - MicSensitivity) || analogRead(LDRPin[extorint]) > (LDRval[extorint] + LDRSensitivity) || analogRead(LDRPin[extorint]) < (LDRval[extorint] - LDRSensitivity))  {
           v = 5;
         }
         if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
@@ -479,15 +470,14 @@ void loop() {
 
 
 
-    if(vars[0] == 9)  {    // This is used to zero the value for both the mic and the LDR channels
+    if(vars[0] == 9)  {    // This is used for cool things
 
       if(vars[1] == 99)  {    //9,99!  Initiates power off
         digitalWrite(5, LOW);
       }
 
       if(vars[1] == 1)  {    //9,1!Recalibrate the sensors
-        calsensors(0);
-        calsensors(1);
+        calsensors();
       }
 
       if(vars[1] == 2)  {   //0,2,X!  Set camera type
@@ -588,9 +578,11 @@ void clockrst()  {  //Used to set the time variable t to the current time, allow
   t = now();
 }
 
-void calsensors(int intorext)  {
-  micval = analogRead(MicPin[intorext]);
-  LDRval = analogRead(LDRPin[intorext]);
+void calsensors()  {
+  micval[0] = analogRead(MicPin[0]);
+  LDRval[0] = analogRead(LDRPin[0]);
+  micval[1] = analogRead(MicPin[1]);
+  LDRval[1] = analogRead(LDRPin[1]);
 }
 
 void hdrphoto(int s1, int s2, int s3)  {
@@ -606,18 +598,20 @@ void hdrphoto(int s1, int s2, int s3)  {
 
 void bulbstartend() {
   int var = 0;
-  if(digitalRead(CableRelease) == LOW)  {
+  if(bulbstartend == 0)  {
     var = 1;
   }
   if(var == 1)  {
     digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
+    bulbstartend = 1;
   }
   digitalWrite(IndicatorPin, HIGH); 
   //Actual IR LED code goes here
   pulseIR();                 
   //End of IR LED code 
-  if(var != 1)  {
+  if(var == 0)  {
     digitalWrite(CableRelease, LOW);   //Get the indicator on for a little visual reference
+    bulbstartend = 0;
   }
   delay(100);
   digitalWrite(IndicatorPin, LOW);
@@ -665,6 +659,7 @@ void bulbmode(int del)  {
     digitalWrite(CableRelease, LOW);  //Turn the LED off again   
   }
 }
+
 
 
 
