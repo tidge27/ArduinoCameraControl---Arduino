@@ -25,6 +25,7 @@ int FlashPin       = 4;         // the pin that the flash optocoupler is attache
 int PwroutPin      = 5;         // the pin that the power ouput transistor is attached to
 int ActivePin      = 8;          // the pin that tells us when something is working away (e.g. a timelapse sequence)
 int CableRelease   = 7;          // Cable relese pin
+int GearPin        = 3;          // The special stuff pin
 
 //    Inputs
 int powerSwitch    = 6;          // the pin on the power switch to check status
@@ -38,7 +39,7 @@ long int vars[50];
 int micval[] = {0,0};
 int LDRval[] = {0,0};
 
-int bulbstartend = 0;
+int bulbstartendvar = 0;
 
 
 void setup() {
@@ -57,6 +58,7 @@ void setup() {
   pinMode(FlashPin, OUTPUT);  // Setup the IRPin as an output
   pinMode(ActivePin, OUTPUT);  // Setup the ActivePin as an output
   pinMode(CableRelease, OUTPUT); //Cable release
+  pinMode(GearPin, OUTPUT); //Special stuff 
 
   digitalWrite(ActivePin, HIGH);// Indicate setup complete
   delay(200);
@@ -76,7 +78,7 @@ void loop() {
     while(digitalRead(powerSwitch) == LOW)  {
       if((now()-t) >= 2)  {
         digitalWrite(ActivePin, LOW); 
-        digitalWrite(PwoutPin, LOW);
+        digitalWrite(PwroutPin, LOW);
       }
     }
     digitalWrite(ActivePin, LOW); 
@@ -205,9 +207,9 @@ void loop() {
           }
         }
         if(accessmove >= 1) {
-          digitalWrite(PwroutPin, HIGH);
+          digitalWrite(GearPin, HIGH);
           delay(accessmove);
-          digitalWrite(PwroutPin, LOW);  
+          digitalWrite(GearPin, LOW);  
         }
 
 
@@ -360,9 +362,9 @@ void loop() {
           }
         }
         if(accessmove >= 1) {
-          digitalWrite(PwroutPin, HIGH);
+          digitalWrite(GearPin, HIGH);
           delay(accessmove);
-          digitalWrite(PwroutPin, LOW);  
+          digitalWrite(GearPin, LOW);  
         }
 
 
@@ -388,83 +390,7 @@ void loop() {
 
 
 
-    if(vars[0] == 6)  {    //Servo timelapse mode
-      int sx = vars[1];
-      int sy = vars[2];
-      int ex = vars[3];
-      int ey = vars[4];
-      int tlsecs = vars[5];
-      int tlmins = 0;
-      int tlhors = 0;
-      int tlshot = 180;
-      int infinite = 180;
-
-
-      if (infinite == 0)  {
-        tlshot = 10;
-      }
-      tlsecs = tlsecs + 60*tlmins + 60*60*tlhors;
-      shuttertrig();
-      for (int i=2; i<= tlshot; i++)  {  //Start the timelapse loop  This part copunts up the number of shots taken
-
-        if(infinite == 0)  {
-          i = 2;
-        }
-
-
-        if(tlsecs >= 2) {
-          delay(700);
-        } 
-        else  {
-          delay(tlsecs * 400);
-        }
-
-        if((ex-sx)>0) {
-          myservox.write(((ex-sx)/180)*tlshot);
-          Serial.println(ex);
-          Serial.println(sx);
-          Serial.println(ex-sx);
-          Serial.println(i);
-          Serial.println(((ex-sx)/180)*i);
-        } 
-        else{
-          myservox.write(180-((sx-ex)/180)*i);
-          Serial.println(180-((sx-ex)/180)*i);
-        }
-        if((ey-sy)>0) {
-          myservoy.write(((ey-sy)/180)*i);
-        } 
-        else{
-          myservoy.write(180-((sy-ey)/180)*i);
-        }
-
-
-
-
-        clockrst();
-        for (int v=0; v<= 1;)  {          //Here we set upt a loop to continuously check if enough time has passed
-
-
-
-
-
-          if((now()-t) >= tlsecs)  {
-            v = 5;
-          }
-          if (Serial.available() > 0) {   // Gives us a chance to quit the loop if the user wants to terminate the operation
-            while(Serial.available())  {
-              Serial.read();
-            }
-            v = 5;
-            i = tlshot + 10;
-          }
-        }
-        shuttertrig();
-      }
-
-    }
-
-
+ 
 
 
 
@@ -568,9 +494,9 @@ void flashtrig()  {
 
 void driptrig(int delayvar)  {
   if(delayvar > 0)  {
-    digitalWrite(PwroutPin, HIGH);    //Trigger the solenoid valve
+    digitalWrite(GearPin, HIGH);    //Trigger the solenoid valve
     delay(delayvar);                          //A little delay
-    digitalWrite(PwroutPin, LOW);     //Turn it off again
+    digitalWrite(GearPin, LOW);     //Turn it off again
   }
 }  
 
@@ -598,12 +524,12 @@ void hdrphoto(int s1, int s2, int s3)  {
 
 void bulbstartend() {
   int var = 0;
-  if(bulbstartend == 0)  {
+  if(bulbstartendvar == 0)  {
     var = 1;
   }
   if(var == 1)  {
     digitalWrite(CableRelease, HIGH);   //Get the indicator on for a little visual reference
-    bulbstartend = 1;
+    bulbstartendvar = 1;
   }
   digitalWrite(IndicatorPin, HIGH); 
   //Actual IR LED code goes here
@@ -611,7 +537,7 @@ void bulbstartend() {
   //End of IR LED code 
   if(var == 0)  {
     digitalWrite(CableRelease, LOW);   //Get the indicator on for a little visual reference
-    bulbstartend = 0;
+    bulbstartendvar = 0;
   }
   delay(100);
   digitalWrite(IndicatorPin, LOW);
